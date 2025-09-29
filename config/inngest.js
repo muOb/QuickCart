@@ -3,13 +3,13 @@ import connectDB from "./db";
 import User from "@/models/User";
 
 // Create a client to send and receive events
-export const inngest = new Inngest({ name: "quickcart-next" }); // use name, not id
+export const inngest = new Inngest({ id: "quickcart-next" });
 
-// User creation event
+//inngest function to save user data to a database
 export const syncUserCreation = inngest.createFunction(
-  { name: "sync-user-from-clerk" },
+  { id: "sync-user-from-clerk" },
   { event: "clerk/user.created" },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const { id, first_name, last_name, email_addresses, image_url } =
       event.data;
     const userData = {
@@ -18,18 +18,18 @@ export const syncUserCreation = inngest.createFunction(
       name: first_name + " " + last_name,
       imageUrl: image_url,
     };
-    await step.run("save-user", async () => {
-      await connectDB();
-      await User.create(userData);
-    });
+    await connectDB();
+    await User.create(userData);
   }
 );
 
-// User update event
+//inngest function to update user data in database
 export const syncUserUpdation = inngest.createFunction(
-  { name: "update-user-from-clerk" },
+  {
+    id: "update-user-from-clerk",
+  },
   { event: "clerk/user.updated" },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const { id, first_name, last_name, email_addresses, image_url } =
       event.data;
     const userData = {
@@ -38,22 +38,18 @@ export const syncUserUpdation = inngest.createFunction(
       name: first_name + " " + last_name,
       imageUrl: image_url,
     };
-    await step.run("update-user", async () => {
-      await connectDB();
-      await User.findByIdAndUpdate(id, userData);
-    });
+    await connectDB();
+    await User.findByIdAndUpdate(id, userData);
   }
 );
 
-// User deletion event
+//inngest function to delete user from database
 export const syncUserDeletion = inngest.createFunction(
-  { name: "delete-user-with-clerk" },
+  { id: "delete-user-with-clerk" },
   { event: "clerk/user.deleted" },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const { id } = event.data;
-    await step.run("delete-user", async () => {
-      await connectDB();
-      await User.findByIdAndDelete(id);
-    });
+    await connectDB();
+    await User.findByIdAndDelete(id);
   }
 );
